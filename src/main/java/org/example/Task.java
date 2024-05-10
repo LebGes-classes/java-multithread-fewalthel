@@ -1,181 +1,93 @@
 package org.example;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import java.lang.Thread;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
-import static java.lang.Thread.State.WAITING;
-
-
 public class Task {
-    private int number; //порядковый номер задачи
+    public int number; //порядковый номер задачи
     private int idWorker; // айди исполнителя
-    private int time; //время в часах, выделенное на исполнение задачи (>=1 &&<= 16)
-    private int complete; //время, на сколько сделана задача (когда complete = time, статус задачи меняется)
-    private boolean status; //статус задачи (false, если задача выполнена)
-    private int counterOfTasks = 0;
+    public int remainingHours; //время в часах, выделенное на исполнение задачи (>=1 &&<= 16)
+    public boolean status; //статус задачи (false, если задача выполнена)
+    private static int counterOfTasks = 1;
 
+    private static final String TITLE_OF_TASK_TABLE = "C:\\Users\\User\\Documents\\GitHub\\java-multithread-fewalthel\\src\\main\\java\\org\\example\\tasks.xlsx";
 
-    //private так как создать задачу без имполнителя мы не можем
-    private Task(int id) {
+    public Task(int idWorker) {
         //установка времени выполнения задачи
         boolean flag = true;
+        System.out.println("Введите время, выделенное на выполнение задачи");
         while (flag) {
             Scanner scan = new Scanner(System.in);
             int time = scan.nextInt();
             if (time >= 1 && time <= 16) {
-                this.time = time;
+                this.remainingHours = time;
                 flag = false;
             } else {
-                System.out.println();
+                System.out.println("Время, выделенное на выполнение задачи должно быть >=1 часа и <=16 часов.\n" +
+                        "Попробуйте выбрать время заново:");
             }
         }
-        this.complete = 0;
         this.status = true;
         this.number = counterOfTasks;
-        this.idWorker = id;
+        this.idWorker = idWorker;
     }
 
     /**
      * Метод для добавления новой задачи сотруднику
      * @param idWorker внутренний номер исполнителя
      */
-    public void addTask(int idWorker) throws Exception {
+    public static void addTask(int idWorker) {
         if (Worker.idInTable(idWorker)) {
             if (Worker.workerIsWorks(idWorker)) {
                 Task task = new Task(idWorker);
-                addTaskOnTable(task);
-                counterOfTasks++;
-            } else {
-                System.out.println("Работник уволен");
-            }
-        } else {
-            System.out.println("Работника с таким id нет");
-        }
-    }
-
-    /**
-     * Метод для передачи задачи от одного исполнителя другому
-     * @param idWorker внутренний номер нового исполнителя
-     * @param number номер передаваемой задачи
-     */
-    public void TransmitTask(int number, int idWorker) throws IOException {
-        //меняем исполнителя для задачи, при этом complete не изменяется
-        String fileName = "/.tasks.xlsx";
-        // Открытие файла Excel
-        FileInputStream fis = new FileInputStream(fileName);
-        Workbook workbook = new XSSFWorkbook(fis);
-        FileOutputStream fot = new FileOutputStream(fileName);
-        try {
-            // Получение первого листа
-            Sheet sheet = workbook.getSheetAt(0);
-            // Итерация по строкам листа
-            for (Row row : sheet) {
-                // Получение ячейки из столбца поиска
-                Cell searchCell = row.getCell(0);
-
-                // Проверка, содержит ли ячейка искомое значение
-                if (searchCell.getStringCellValue().equals(Integer.toString(number))) {
-                    Cell modifyCell = row.getCell(1);
-                    modifyCell.setCellValue(idWorker);
-                    break;
-                }
-            }
-            workbook.write(fot);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            // Закрытие потоков
-            fis.close();
-            fot.close();
-            workbook.close();
-        }
-    }
-
-    /**
-     * Метод для начинания выполнения задачи
-     * @param number номер задачи
-     */
-    public void DoTask(int number) throws InterruptedException, IOException {
-        //если задача ещё не выполнена
-        if (status) {
-            if (complete == 0 ) { //если задачу еще не начинали выплнять, создаём для неё новый поток
-                Thread thread = new Thread(
-                        //если задача выполнена, меняем статус и останавливаем поток
-                    if (complete == time) {
-                        changeStatus(number);
-                    //thread.stop();}); остановка жизненного цикла потока
-
-                //если задача не выполнена, начинаем работу над ней
-                System.out.println("Работу работаем..."););
-                thread.start();
-                Timer timer = new Timer();
-
-                if (timer.getPassTime() == 8*3600000) { //преобразование мс в часы
-                    thread.wait();
+                if (Worker.getWorker(idWorker) != null) {
+                    Worker.getWorker(idWorker).tasks.add(task);
+                    addTaskOnTable(task);
+                    counterOfTasks++;
+                } else{
+                    System.out.println("Работник с номером "+idWorker+" не найден");
                 }
             } else {
-                if (Thread.currentThread().getState() == WAITING ) {
-                    Thread.currentThread().notify();
-                }
+                System.out.println("Работник с номером "+idWorker+" уволен");
             }
         } else {
-            System.out.println("Задача уже выполнена");
+            System.out.println("Работника с номером "+idWorker+" нет");
         }
     }
-
-    public void StopTask
 
     /**
      * Метод для изменения статуса задачи
      * @param number номер задачи
      */
-    public void changeStatus (int number) throws IOException{
-        String fileName = "/.tasks.xlsx";
-        // Открытие файла Excel
-        FileInputStream fis = new FileInputStream(fileName);
-        Workbook workbook = new XSSFWorkbook(fis);
-        FileOutputStream fot = new FileOutputStream(fileName);
-        try {
-            // Получение первого листа
-            Sheet sheet = workbook.getSheetAt(0);
-            // Итерация по строкам листа
-            for (Row row : sheet) {
-                // Получение ячейки из столбца поиска
-                Cell searchCell = row.getCell(0);
+    public static void changeTaskStatus(int number) {
+        String fileName = TITLE_OF_TASK_TABLE;
 
-                // Проверка, содержит ли ячейка искомое значение
-                if (searchCell.getStringCellValue().equals(Integer.toString(number))) {
-                    Cell modifyCell = row.getCell(4);
-                    // Получение ячейки для изменения
-                    if (modifyCell.getStringCellValue().equals("true")) {
-                        modifyCell.setCellValue("false");
-                    } else {
-                        modifyCell.setCellValue("true");
+        try (FileInputStream fis = new FileInputStream(fileName);
+             Workbook workbook = new XSSFWorkbook(fis);
+             FileOutputStream fos = new FileOutputStream(fileName)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (Row row : sheet) {
+                Cell searchCell = row.getCell(0); // номер задачи в первом столбце (индекс 0)
+                Cell statusCell = row.getCell(3); // статус в четвертом столбце (индекс 3)
+
+                if (searchCell != null && searchCell.getCellType() == CellType.NUMERIC && searchCell.getNumericCellValue() == number) {
+                    if (statusCell != null ) {
+                        statusCell.setCellValue(!statusCell.getBooleanCellValue());
+                        break; // Выходим из цикла, так как задача найдена
                     }
-                    break;
                 }
             }
-            workbook.write(fot);
+            workbook.write(fos);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            // Закрытие потоков
-            fis.close();
-            fot.close();
-            workbook.close();
         }
     }
 
@@ -183,46 +95,28 @@ public class Task {
      * Метод для добавления данных о задаче в таблицу
      * @param task задача, данные о которой необходимо добавить в таблицу
      */
-    private void addTaskOnTable(Task task) throws IOException{
+    private static void addTaskOnTable(Task task) {
         // Путь к файлу Excel
-        String fileName = "./tasks.xlsx";
+        String fileName = TITLE_OF_TASK_TABLE;
 
-        // Данные для добавления
-        List<Object> newData = new ArrayList<>();
-        newData.add(task.number);
-        newData.add(task.idWorker);
-        newData.add(task.time);
-        newData.add(task.complete);
+        try (FileInputStream fis = new FileInputStream(fileName);
+             Workbook workbook = new XSSFWorkbook(fis);
+             FileOutputStream fos = new FileOutputStream(fileName)) {
 
-        // Открытие файла Excel
-        FileInputStream fis = new FileInputStream(fileName);
-        Workbook workbook = new XSSFWorkbook(fis);
-
-        try {
-            // Получение первого листа
             Sheet sheet = workbook.getSheetAt(0);
-
-            // Получение номера последней строки
             int lastRowNum = sheet.getLastRowNum();
-
-            // Создание новой строки
             Row newRow = sheet.createRow(lastRowNum + 1);
 
-            // Добавление данных в новую строку
-            for (int i = 0; i < newData.size(); i++) {
-                Cell cell = newRow.createCell(i);
-                cell.setCellValue((String) newData.get(i));
-            }
+            // Добавляем данные задачи в ячейки
+            newRow.createCell(0).setCellValue(task.number);
+            newRow.createCell(1).setCellValue(task.idWorker);
+            newRow.createCell(2).setCellValue(task.remainingHours);
+            newRow.createCell(3).setCellValue(task.status);
 
-            // Сохранение изменений
-            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
-            workbook.write(fileOutputStream);
+            workbook.write(fos); // Сохраняем изменения
 
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            fis.close();
-            workbook.close();
         }
     }
 }
