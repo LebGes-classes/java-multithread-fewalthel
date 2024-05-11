@@ -61,6 +61,14 @@ public class Worker implements Runnable{
                 this.workedHours += 1; // одна итерация - один час работы сотрудника
                 currentTask.remainingHours -= 1; // один час задачи выполнен - уменьшаем её время исполнения на 1
                 hoursToWork += 1; // прибавляем отработанные часы
+
+                //делаем остановку на 1 секунду между рабочими часами
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
                 System.out.println(this.name + ": выполнено " + hoursToWork + " часов из задачи №" + currentTask.number);
 
                 // если время выполнения задачи закончилось, значит мы выполнили задачу (на этом моменте происходит выход из цикла while)
@@ -76,7 +84,7 @@ public class Worker implements Runnable{
                 if (this.workedHours == MAX_WORK_HOURS) {
                     // вносим данные о проделанной работе в течение дня в таблицу
                     addDataAboutWorkingDayInTable(counterOfDoneTasks, this.id, WORKING_DAY, initialCountOfTasks);
-                    System.out.println(this.name + ": закончил рабочий день. Время простоя: " + this.idleHours + " часов");
+                    System.out.println(this.name + ": закончил рабочий день. Время простоя: " + this.idleHours/1000 + " часов");
 
                     counterOfDoneTasks = 0; // обнуляем счётчик выполненных задач в течение дня
                     this.idleHours+= TIME_TO_SLEEP; // к времени простоя сотрудника прибавляем время сна(то время, пока он не работает)
