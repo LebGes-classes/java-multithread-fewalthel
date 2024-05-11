@@ -11,12 +11,12 @@ import java.util.Scanner;
 
 public class Task {
     public int number; //порядковый номер задачи
-    private int idWorker; // айди исполнителя
+    public int idWorker; // айди исполнителя
     public int remainingHours; //время в часах, выделенное на исполнение задачи (>=1 &&<= 16)
     public boolean status; //статус задачи (false, если задача выполнена)
-    private static int counterOfTasks = 1;
+    public static int counterOfTasks = 1; //счётчик задач
 
-    private static final String TITLE_OF_TASK_TABLE = "C:\\Users\\User\\Documents\\GitHub\\java-multithread-fewalthel\\src\\main\\java\\org\\example\\tasks.xlsx";
+    public static final String TITLE_OF_TASK_TABLE = "C:\\Users\\User\\Documents\\GitHub\\java-multithread-fewalthel\\src\\main\\java\\org\\example\\tasks.xlsx";
 
     public Task(int idWorker) {
         //установка времени выполнения задачи
@@ -43,16 +43,12 @@ public class Task {
      * @param idWorker внутренний номер исполнителя
      */
     public static void addTask(int idWorker) {
-        if (Worker.idInTable(idWorker)) {
+        if (Worker.getWorker(idWorker) != null) {
             if (Worker.workerIsWorks(idWorker)) {
                 Task task = new Task(idWorker);
-                if (Worker.getWorker(idWorker) != null) {
-                    Worker.getWorker(idWorker).tasks.add(task);
-                    addTaskOnTable(task);
-                    counterOfTasks++;
-                } else{
-                    System.out.println("Работник с номером "+idWorker+" не найден");
-                }
+                Worker.getWorker(idWorker).tasks.add(task);
+                addTaskOnTable(task);
+                counterOfTasks++;
             } else {
                 System.out.println("Работник с номером "+idWorker+" уволен");
             }
@@ -81,7 +77,7 @@ public class Task {
                 if (searchCell != null && searchCell.getCellType() == CellType.NUMERIC && searchCell.getNumericCellValue() == number) {
                     if (statusCell != null ) {
                         statusCell.setCellValue(!statusCell.getBooleanCellValue());
-                        break; // Выходим из цикла, так как задача найдена
+                        break; // выходим из цикла, так как задача найдена
                     }
                 }
             }
@@ -95,25 +91,21 @@ public class Task {
      * Метод для добавления данных о задаче в таблицу
      * @param task задача, данные о которой необходимо добавить в таблицу
      */
-    private static void addTaskOnTable(Task task) {
-        // Путь к файлу Excel
+    public static void addTaskOnTable(Task task) {
         String fileName = TITLE_OF_TASK_TABLE;
 
-        try (FileInputStream fis = new FileInputStream(fileName);
-             Workbook workbook = new XSSFWorkbook(fis);
-             FileOutputStream fos = new FileOutputStream(fileName)) {
+        try (FileInputStream fis = new FileInputStream(fileName); Workbook workbook = new XSSFWorkbook(fis); FileOutputStream fos = new FileOutputStream(fileName)) {
 
             Sheet sheet = workbook.getSheetAt(0);
             int lastRowNum = sheet.getLastRowNum();
             Row newRow = sheet.createRow(lastRowNum + 1);
 
-            // Добавляем данные задачи в ячейки
+            // добавляем данные задачи в ячейки
             newRow.createCell(0).setCellValue(task.number);
             newRow.createCell(1).setCellValue(task.idWorker);
             newRow.createCell(2).setCellValue(task.remainingHours);
             newRow.createCell(3).setCellValue(task.status);
-
-            workbook.write(fos); // Сохраняем изменения
+            workbook.write(fos);
 
         } catch (IOException e) {
             e.printStackTrace();
